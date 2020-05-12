@@ -19,7 +19,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
 import com.programining.speechtotext.R;
+import com.programining.speechtotext.apimodel.ResultContainer;
 import com.programining.speechtotext.model.MyConstants;
 
 import org.json.JSONException;
@@ -36,7 +38,7 @@ public class SpeechToTextSampleFragment extends Fragment {
     /**
      * use this command to print the TOKEN : gcloud auth application-default print-access-token
      */
-    private static final String API_TOKEN = "";
+    private static final String API_TOKEN = "ya29.c.Ko8BygcQ2BlC4QRGvo_XE8Xu03tcHIFGZ2h0WfUpVvhZ8T1_eaplHYCfMWU1CIWdeRTjVmDFuoh63K4aN8QISbmFZ9O4YdqSM1GQd3upiS0EAc92onyPbYre_l6KGEkivfes60lf56epPAcLdPMC3bNK7DmY1S67f2FMF87SV_Urkgh5CL4yn6iZfxm2S9OEyPA";
     private TextView tvResponse;
     private ProgressBar progressBar;
     private Context mContext;
@@ -111,7 +113,13 @@ public class SpeechToTextSampleFragment extends Fragment {
         Response.Listener<JSONObject> successListener = new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                tvResponse.setText(response.toString());
+
+                Gson gson = new Gson();
+
+                ResultContainer results = gson.fromJson(response.toString(), ResultContainer.class);
+                tvResponse.setText("Transcript : " + getTranscript(results));
+                tvResponse.append("\nConfidence : " + getConfidence(results));
+
                 progressBar.setVisibility(View.GONE);
             }
         };
@@ -145,6 +153,24 @@ public class SpeechToTextSampleFragment extends Fragment {
 
         queue.add(request);
 
+    }
+
+    private String getTranscript(ResultContainer results) {
+        return results
+                .getResults()
+                .get(0)
+                .getAlternatives()
+                .get(0)
+                .getTranscript();
+    }
+
+    private String getConfidence(ResultContainer results) {
+        return results
+                .getResults()
+                .get(0)
+                .getAlternatives()
+                .get(0)
+                .getConfidence() + "";
     }
 
     private JSONObject getAudioJsonObj() {
