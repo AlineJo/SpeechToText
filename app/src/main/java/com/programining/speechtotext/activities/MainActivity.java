@@ -8,22 +8,23 @@ import androidx.fragment.app.FragmentTransaction;
 import android.os.Bundle;
 
 import com.programining.speechtotext.R;
+import com.programining.speechtotext.fragments.SpeechToTextSampleFragment;
 import com.programining.speechtotext.interfaces.MediatorInterface;
 
-public class MainActivity extends AppCompatActivity  implements MediatorInterface {
+public class MainActivity extends AppCompatActivity implements MediatorInterface {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-       // changeFragmentTo(new DialogFlowTemplateFragment(), DialogFlowTemplateFragment.class.getSimpleName());
+        changeFragmentTo(new SpeechToTextSampleFragment(), SpeechToTextSampleFragment.class.getSimpleName());
     }
 
     /**
      * enables changing fragments dynamically
      *
      * @param fragmentToDisplay : allow you to pass the fragment you want to display
-     * @param fragmentTag : allow to pass the fragment tag
+     * @param fragmentTag       : allow to pass the fragment tag
      */
     @Override
     public void changeFragmentTo(Fragment fragmentToDisplay, String fragmentTag) {
