@@ -159,7 +159,6 @@ public class SoundRecordFragment extends Fragment {
                     MyAudioRecord a = d.getValue(MyAudioRecord.class);
                     mAudioRecords.add(a);
                 }
-                Toast.makeText(mContext, mAudioRecords.get(0).getDisplayName(), Toast.LENGTH_SHORT).show();
                 mAdapter.update(mAudioRecords);
             }
 
@@ -182,8 +181,9 @@ public class SoundRecordFragment extends Fragment {
         mAdapter.setupAdapterListener(new AudioRecordsAdapter.AdapterListener() {
             @Override
             public void onItemClick(MyAudioRecord audioRecord) {
-                //TODO : change to details Fragment
-                // mMediatorCallback.changeFragmentTo();
+                AnalyzeAudioFragment fragment = new AnalyzeAudioFragment();
+                fragment.setAudioRecord(audioRecord);
+                mMediatorCallback.changeFragmentTo(fragment, AnalyzeAudioFragment.class.getSimpleName());
             }
         });
 
@@ -257,7 +257,7 @@ public class SoundRecordFragment extends Fragment {
                         audioRecord.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                             @Override
                             public void onSuccess(Uri firebaseUri) {
-                                saveAudioRecordToFirebaseDatabase(firebaseUri);
+                                saveAudioRecordToFirebaseDatabase(MyConstants.FB_KEY_STORAGE_PATH + mDisplayName);
                             }
                         });
 
@@ -273,7 +273,7 @@ public class SoundRecordFragment extends Fragment {
 
     }
 
-    private void saveAudioRecordToFirebaseDatabase(Uri firebaseUri) {
+    private void saveAudioRecordToFirebaseDatabase(String firebaseUri) {
         // Write a message to the database
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference(MyConstants.FB_KEY_AUDIO_RECORDS);
@@ -296,7 +296,7 @@ public class SoundRecordFragment extends Fragment {
         a.setLocalPath(mFileName);
         a.setDisplayName(mDisplayName);
         a.setLocalUri("");
-        a.setFirebaseUri(firebaseUri.toString());
+        a.setFirebaseUri(firebaseUri);
         a.setUploaded(true);
         a.setLength(0.0);
 

@@ -19,4 +19,5 @@ public class MyConstants {
 
 
     public static final String FB_KEY_AUDIO_RECORDS = "audioRecords";
+    public static final String FB_KEY_STORAGE_PATH = "gs://yousuf-dialogflow.appspot.com/AudioRecords/";
 }
