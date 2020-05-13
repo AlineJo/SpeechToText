@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,9 +19,17 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.programining.speechtotext.R;
+import com.programining.speechtotext.model.MyAudioRecord;
+import com.programining.speechtotext.model.MySQLHelper;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -43,6 +52,7 @@ public class SoundRecordFragment extends Fragment {
     private boolean isPlaying;
     private boolean isRecording;
     private Context mContext;
+    private String mDisplayName;
     //private MediatorInterface mMediatorCallback;
 
     public SoundRecordFragment() {
@@ -158,6 +168,67 @@ public class SoundRecordFragment extends Fragment {
         shouldEnableFloatingButton(fabPlay, true);
         shouldEnableFloatingButton(fabStopPlay, false);
 
+        uploadAudioRecordToStorage();
+
+    }
+
+    private void uploadAudioRecordToStorage() {
+        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+        Uri file = Uri.fromFile(new File(mFileName));
+        final StorageReference audioRecord = storageRef.child("AudioRecords/" + mDisplayName + ".3gp");
+
+        audioRecord.putFile(file)
+                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        // Get a URL to the uploaded content
+                        //  Uri downloadUrl = taskSnapshot.getDownloadUrl();
+
+                        audioRecord.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri firebaseUri) {
+                                saveAudioRecordToFirebaseDatabase(firebaseUri);
+                            }
+                        });
+
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+                        // Handle unsuccessful uploads
+                        // ...
+                    }
+                });
+
+    }
+
+    private void saveAudioRecordToFirebaseDatabase(Uri firebaseUri) {
+
+    }
+
+    private void saveRecordedAudioFileToSQL() {
+
+        MySQLHelper mySQLHelper = new MySQLHelper(mContext);
+        MyAudioRecord a = new MyAudioRecord();
+         /*
+         private int fileId;
+        private String firebaseId;
+        private String localPath;
+        private String displayName;
+        private String localUri;
+        private String firebaseUri;
+        private boolean isUploaded;
+        private double length;
+        */
+        a.setFirebaseId("");
+        a.setLocalPath(mFileName);
+        a.setDisplayName(mDisplayName);
+        a.setLocalUri("");
+        a.setFirebaseUri("");
+        a.setUploaded(false);
+        a.setLength(0.0);
+        mySQLHelper.addAudioRecord(a);
 
     }
 
@@ -192,8 +263,9 @@ public class SoundRecordFragment extends Fragment {
 
     private void setFileName() {
         String path = mContext.getExternalCacheDir().getAbsolutePath() + "/";
-        String randomName = UUID.randomUUID().toString();
-        mFileName = path + randomName + ".3gp";
+
+        mDisplayName = UUID.randomUUID().toString();
+        mFileName = path + mDisplayName + ".3gp";
     }
 
 
