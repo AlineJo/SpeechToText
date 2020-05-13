@@ -18,19 +18,32 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.programining.speechtotext.R;
+import com.programining.speechtotext.adapters.AudioRecordsAdapter;
+import com.programining.speechtotext.interfaces.MediatorInterface;
 import com.programining.speechtotext.model.MyAudioRecord;
+import com.programining.speechtotext.model.MyConstants;
 import com.programining.speechtotext.model.MySQLHelper;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.UUID;
 
 /**
@@ -53,17 +66,22 @@ public class SoundRecordFragment extends Fragment {
     private boolean isRecording;
     private Context mContext;
     private String mDisplayName;
-    //private MediatorInterface mMediatorCallback;
+    private MediatorInterface mMediatorCallback;
+
+    private AudioRecordsAdapter mAdapter;
+    private ArrayList<MyAudioRecord> mAudioRecords;
+
 
     public SoundRecordFragment() {
         // Required empty public constructor
+        mAudioRecords = new ArrayList<>();
     }
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         mContext = context;
-        // mMediatorCallback = (MediatorInterface) context;
+        mMediatorCallback = (MediatorInterface) context;
     }
 
     @Override
@@ -115,8 +133,61 @@ public class SoundRecordFragment extends Fragment {
             }
         });
 
+        mAdapter = new AudioRecordsAdapter();
+        RecyclerView recyclerView = parentView.findViewById(R.id.recycler_view);
+        setupRecyclerView(recyclerView);
+
+        readAudioRecordsFromFirebase();
+
 
         return parentView;
+    }
+
+    private void readAudioRecordsFromFirebase() {
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference(MyConstants.FB_KEY_AUDIO_RECORDS);
+
+        // Read from the database
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // This method is called once with the initial value and again
+                // whenever data at this location is updated.
+                mAudioRecords.clear();
+                for (DataSnapshot d : dataSnapshot.getChildren()) {
+                    MyAudioRecord a = d.getValue(MyAudioRecord.class);
+                    mAudioRecords.add(a);
+                }
+                Toast.makeText(mContext, mAudioRecords.get(0).getDisplayName(), Toast.LENGTH_SHORT).show();
+                mAdapter.update(mAudioRecords);
+            }
+
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                // Failed to read value
+                Log.w("fb_error", "Failed to read value.", error.toException());
+            }
+        });
+    }
+
+    private void setupRecyclerView(RecyclerView recyclerView) {
+        LinearLayoutManager manager = new LinearLayoutManager(mContext);
+        DividerItemDecoration decoration = new DividerItemDecoration(mContext, manager.getOrientation());
+        recyclerView.setLayoutManager(manager);
+        recyclerView.addItemDecoration(decoration);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+
+        mAdapter.setupAdapterListener(new AudioRecordsAdapter.AdapterListener() {
+            @Override
+            public void onItemClick(MyAudioRecord audioRecord) {
+                //TODO : change to details Fragment
+                // mMediatorCallback.changeFragmentTo();
+            }
+        });
+
+        recyclerView.setAdapter(mAdapter);
     }
 
     private void shouldEnableFloatingButton(FloatingActionButton fab, boolean shouldEnable) {
@@ -133,7 +204,6 @@ public class SoundRecordFragment extends Fragment {
         fab.setEnabled(shouldEnable);
         fab.setColorFilter(Color.parseColor(color), android.graphics.PorterDuff.Mode.SRC_IN);//ContextCompat.getColor(mContext, R.color.COLOR_YOUR_COLOR)
     }
-
 
     private void startRecording() {
 
@@ -175,7 +245,7 @@ public class SoundRecordFragment extends Fragment {
     private void uploadAudioRecordToStorage() {
         StorageReference storageRef = FirebaseStorage.getInstance().getReference();
         Uri file = Uri.fromFile(new File(mFileName));
-        final StorageReference audioRecord = storageRef.child("AudioRecords/" + mDisplayName + ".3gp");
+        final StorageReference audioRecord = storageRef.child("AudioRecords/" + mDisplayName);
 
         audioRecord.putFile(file)
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -204,14 +274,14 @@ public class SoundRecordFragment extends Fragment {
     }
 
     private void saveAudioRecordToFirebaseDatabase(Uri firebaseUri) {
+        // Write a message to the database
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference(MyConstants.FB_KEY_AUDIO_RECORDS);
+        //generate unique id
+        String firebaseId = myRef.push().getKey();
 
-    }
 
-    private void saveRecordedAudioFileToSQL() {
-
-        MySQLHelper mySQLHelper = new MySQLHelper(mContext);
-        MyAudioRecord a = new MyAudioRecord();
-         /*
+                 /*
          private int fileId;
         private String firebaseId;
         private String localPath;
@@ -221,15 +291,28 @@ public class SoundRecordFragment extends Fragment {
         private boolean isUploaded;
         private double length;
         */
-        a.setFirebaseId("");
+        final MyAudioRecord a = new MyAudioRecord();
+        a.setFirebaseId(firebaseId);
         a.setLocalPath(mFileName);
         a.setDisplayName(mDisplayName);
         a.setLocalUri("");
-        a.setFirebaseUri("");
-        a.setUploaded(false);
+        a.setFirebaseUri(firebaseUri.toString());
+        a.setUploaded(true);
         a.setLength(0.0);
-        mySQLHelper.addAudioRecord(a);
 
+        myRef.child(firebaseId).setValue(a).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+
+                saveRecordedAudioFileToSQL(a);
+            }
+        });
+
+    }
+
+    private void saveRecordedAudioFileToSQL(MyAudioRecord a) {
+        MySQLHelper mySQLHelper = new MySQLHelper(mContext);
+        mySQLHelper.addAudioRecord(a);
     }
 
     private void startPlaying() {
@@ -264,8 +347,8 @@ public class SoundRecordFragment extends Fragment {
     private void setFileName() {
         String path = mContext.getExternalCacheDir().getAbsolutePath() + "/";
 
-        mDisplayName = UUID.randomUUID().toString();
-        mFileName = path + mDisplayName + ".3gp";
+        mDisplayName = UUID.randomUUID().toString() + ".3gp";
+        mFileName = path + mDisplayName;
     }
 
 
