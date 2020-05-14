@@ -5,11 +5,13 @@ import android.content.Context;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -53,6 +55,9 @@ public class AnalyzeAudioFragment extends Fragment {
     private Context mContext;
     private ProgressBar progressBar;
     private TextView tvResponse;
+    private SeekBar seekBar;
+    private TextView tvTotalTime;
+    private TextView tvElapsed;
 
     public AnalyzeAudioFragment() {
         // Required empty public constructor
@@ -71,10 +76,13 @@ public class AnalyzeAudioFragment extends Fragment {
         View parentView = inflater.inflate(R.layout.fragment_analize_audio, container, false);
 
 
+        tvTotalTime = parentView.findViewById(R.id.tv_total_time);
+        tvElapsed = parentView.findViewById(R.id.tv_total_elipse);
         fabPlay = parentView.findViewById(R.id.fab_play);
         fabStopPlay = parentView.findViewById(R.id.fab_stop_playing);
         tvResponse = parentView.findViewById(R.id.tv_result);
         progressBar = parentView.findViewById(R.id.progressBar);
+        seekBar = parentView.findViewById(R.id.seekBar);
         FloatingActionButton fabAnalyze = parentView.findViewById(R.id.fab_analyze);
         TextView tvTitle = parentView.findViewById(R.id.tv_title);
 
@@ -114,13 +122,87 @@ public class AnalyzeAudioFragment extends Fragment {
             mPlayer.setDataSource(mAudioRecord.getLocalPath());
             mPlayer.prepare();
             mPlayer.start();
+
+            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
+
+                    updateSeekBarProgress();
+                }
+            });
+
         } catch (IOException e) {
             Log.e(LOG_TAG, "prepare() failed");
         }
 
+
         isPlaying = true;
         shouldEnableFloatingButton(fabPlay, false);
         shouldEnableFloatingButton(fabStopPlay, true);
+    }
+
+    private void updateSeekBarProgress() {
+        seekBar.setProgress(0);
+        seekBar.setMax(mPlayer.getDuration());
+
+        // Updating progress bar
+        Handler handler = new Handler();
+        handler.postDelayed(getUpdateRunnable(handler), 15);
+
+
+    }
+
+    private Runnable getUpdateRunnable(final Handler handler) {
+        return new Runnable() {
+            public void run() {
+                if (mPlayer != null) {
+                    long totalDuration = mPlayer.getDuration();
+                    long currentDuration = mPlayer.getCurrentPosition();
+
+                    // Displaying Total Duration time
+                    //tvTotalTime.setText(currentDuration+"");
+                    // Displaying time completed playing
+                    tvElapsed.setText("" + milliSecondsToTimer(currentDuration));
+
+                    // Updating progress bar
+                    seekBar.setProgress((int) currentDuration);
+
+                    // Call this thread again after 15 milliseconds => ~ 1000/60fps
+                    handler.postDelayed(this, 15);
+                }
+            }
+        };
+    }
+
+    /**
+     * Function to convert milliseconds time to
+     * Timer Format
+     * Hours:Minutes:Seconds
+     */
+    public String milliSecondsToTimer(long milliseconds) {
+        String finalTimerString = "";
+        String secondsString = "";
+
+        // Convert total duration into time
+        int hours = (int) (milliseconds / (1000 * 60 * 60));
+        int minutes = (int) (milliseconds % (1000 * 60 * 60)) / (1000 * 60);
+        int seconds = (int) ((milliseconds % (1000 * 60 * 60)) % (1000 * 60) / 1000);
+        // Add hours if there
+        if (hours > 0) {
+            finalTimerString = hours + ":";
+        }
+
+        // Prepending 0 to seconds if it is one digit
+        if (seconds < 10) {
+            secondsString = "0" + seconds;
+        } else {
+            secondsString = "" + seconds;
+        }
+
+        finalTimerString = finalTimerString + minutes + ":" + secondsString;
+
+        // return timer string
+        return finalTimerString;
     }
 
     private void stopPlaying() {
