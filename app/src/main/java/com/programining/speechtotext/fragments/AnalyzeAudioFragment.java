@@ -43,7 +43,7 @@ public class AnalyzeAudioFragment extends Fragment {
     /**
      * use this command to print the TOKEN : gcloud auth application-default print-access-token
      */
-    private static final String API_TOKEN = "ya29.c.Ko8Bygd2pTrL8uk5Fpaw19mMFxyDdQRzbXv0eTKQ_4wHc1SAoOsrBAp4EHkdrrrf6sYYzbH2R66BTnK1bWAAYARgS7Vf8f_-njN2fEtHef6mMxw5BtSbZcLP8L66gcggxIa9ytvePWd0IeX7w_gf4Txa5f_O-IpX2q8oxNloGRJyBsmhxCHy4Hr5SlZpW8RB-c4";
+    private static final String API_TOKEN = "ya29.c.Ko8BygdiScO9YW_cBrox9vvctf3aUZ0ljzIQsqtW0PiTYQ00nEie7icMxCLR9TxGRmwx_jEJVwOLdwjc5xM6NuydRzTpCzLLJ6umMH3D7awYPQxsBChgKiMwCwzzn4EYiE6cpCu1HCGMg0j1UL-R_goqXYmqdcFtFSIVq5pjIXU6A1Z-D0paC3976ffrYaBSKEY";
     private static final String LOG_TAG = "Analyze";
     private MyAudioRecord mAudioRecord;
     private MediaPlayer mPlayer;
@@ -204,6 +204,7 @@ public class AnalyzeAudioFragment extends Fragment {
                 progressBar.setVisibility(View.GONE);
             }
         };
+
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.POST,
                 MyConstants.KEY_SPEECH_TO_TEXT_URL,
@@ -256,7 +257,7 @@ public class AnalyzeAudioFragment extends Fragment {
          *       "enableWordTimeOffsets": false
          *   },
          *   "audio": {
-         *       "uri":"gs://cloud-samples-tests/speech/brooklyn.flac"
+         *       "uri":"gs://yousuf-dialogflow.appspot.com/AudioRecords/<fileName>"
          *   }
          * }
          */
@@ -270,7 +271,7 @@ public class AnalyzeAudioFragment extends Fragment {
 
             config.put(MyConstants.KEY_JSON_KEY_SAMPLE_ENCODING, "AMR");
             config.put(MyConstants.KEY_JSON_KEY_SAMPLE_RATE, 8000);
-            config.put(MyConstants.KEY_JSON_KEY_LANGUAGE, MyConstants.KEY_JSON_VALUE_LANGUAGE);//for "ar"
+            config.put(MyConstants.KEY_JSON_KEY_LANGUAGE, MyConstants.KEY_JSON_VALUE_LANGUAGE);//for "ar", for english MyConstants.KEY_JSON_VALUE_LANGUAGE
             config.put(MyConstants.KEY_JSON_KEY_OFFSET, false);
 
 
