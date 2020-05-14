@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -70,7 +71,7 @@ public class SoundRecordFragment extends Fragment {
 
     private AudioRecordsAdapter mAdapter;
     private ArrayList<MyAudioRecord> mAudioRecords;
-
+    private ProgressBar progressBar;
 
     public SoundRecordFragment() {
         // Required empty public constructor
@@ -94,6 +95,7 @@ public class SoundRecordFragment extends Fragment {
         fabStopRecord = parentView.findViewById(R.id.fab_stop_recording);
         fabPlay = parentView.findViewById(R.id.fab_play);
         fabStopPlay = parentView.findViewById(R.id.fab_stop_playing);
+        progressBar = parentView.findViewById(R.id.progressBar);
 
 
         shouldEnableFloatingButton(fabStopRecord, false);
@@ -148,6 +150,8 @@ public class SoundRecordFragment extends Fragment {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference(MyConstants.FB_KEY_AUDIO_RECORDS);
 
+        progressBar.setVisibility(View.VISIBLE);
+
         // Read from the database
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -160,6 +164,7 @@ public class SoundRecordFragment extends Fragment {
                     mAudioRecords.add(a);
                 }
                 mAdapter.update(mAudioRecords);
+                progressBar.setVisibility(View.GONE);
             }
 
 
@@ -167,6 +172,7 @@ public class SoundRecordFragment extends Fragment {
             public void onCancelled(DatabaseError error) {
                 // Failed to read value
                 Log.w("fb_error", "Failed to read value.", error.toException());
+                progressBar.setVisibility(View.GONE);
             }
         });
     }
@@ -243,6 +249,8 @@ public class SoundRecordFragment extends Fragment {
     }
 
     private void uploadAudioRecordToStorage() {
+        progressBar.setVisibility(View.VISIBLE);
+
         StorageReference storageRef = FirebaseStorage.getInstance().getReference();
         Uri file = Uri.fromFile(new File(mFileName));
         final StorageReference audioRecord = storageRef.child("AudioRecords/" + mDisplayName);
@@ -268,6 +276,7 @@ public class SoundRecordFragment extends Fragment {
                     public void onFailure(@NonNull Exception exception) {
                         // Handle unsuccessful uploads
                         // ...
+                        progressBar.setVisibility(View.GONE);
                     }
                 });
 
@@ -313,6 +322,7 @@ public class SoundRecordFragment extends Fragment {
     private void saveRecordedAudioFileToSQL(MyAudioRecord a) {
         MySQLHelper mySQLHelper = new MySQLHelper(mContext);
         mySQLHelper.addAudioRecord(a);
+        progressBar.setVisibility(View.GONE);
     }
 
     private void startPlaying() {

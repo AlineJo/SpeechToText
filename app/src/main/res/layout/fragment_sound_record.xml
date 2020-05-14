@@ -19,6 +19,7 @@
         app:backgroundTint="#FFFFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:focusable="true"
         app:srcCompat="@drawable/ic_mic" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -31,6 +32,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/fab_record"
         app:layout_constraintStart_toEndOf="@+id/fab_record"
         app:layout_constraintTop_toTopOf="@+id/fab_record"
+        android:focusable="true"
         app:srcCompat="@drawable/ic_mic_off" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -44,6 +46,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/fab_stop_recording"
         app:layout_constraintEnd_toStartOf="@+id/fab_stop_playing"
         app:layout_constraintTop_toTopOf="@+id/fab_stop_recording"
+        android:focusable="true"
         app:srcCompat="@drawable/ic_play" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -68,5 +71,15 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/list_item_sound_record" />
 
-
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#fff"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
